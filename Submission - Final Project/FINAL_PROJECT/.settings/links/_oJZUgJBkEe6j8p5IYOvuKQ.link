@@ -1,0 +1,48 @@
+{
+  "itemId" : "_oJZUgJBkEe6j8p5IYOvuKQ",
+  "contextList" : [ {
+    "contextName" : "Dev",
+    "repoId" : "_4-ywIJIsEe6x56qGn8mRSw",
+    "parameterList" : [ {
+      "id" : "_5AFwoZIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Password"
+    }, {
+      "id" : "_5AFwpJIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Database"
+    }, {
+      "id" : "_5AFwpZIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Server"
+    }, {
+      "id" : "_5AFwo5IsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Login"
+    }, {
+      "id" : "_5AFwppIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Port"
+    }, {
+      "id" : "_5AFwopIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_AdditionalParams"
+    } ]
+  }, {
+    "contextName" : "Prod",
+    "repoId" : "_4-ywIJIsEe6x56qGn8mRSw",
+    "parameterList" : [ {
+      "id" : "_5AFwoZIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Password"
+    }, {
+      "id" : "_5AFwpJIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Database"
+    }, {
+      "id" : "_5AFwpZIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Server"
+    }, {
+      "id" : "_5AFwo5IsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Login"
+    }, {
+      "id" : "_5AFwppIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_Port"
+    }, {
+      "id" : "_5AFwopIsEe6x56qGn8mRSw",
+      "name" : "MySqlLocal_AdditionalParams"
+    } ]
+  } ]
+}

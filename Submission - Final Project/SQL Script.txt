@@ -1,0 +1,181 @@
+-- 1.Average movie runtime change over the years:
+SELECT Year, ROUND(AVG(Run_Time), 2) AS average_runtime
+FROM fact_movie
+WHERE Run_Time != 0
+GROUP BY Year
+ORDER BY Year;
+
+
+-- 2. Is there a correlation between the average movie rating and the year of release?
+SELECT Year, ROUND(AVG(Rating), 2) AS average_rating
+FROM fact_movie
+WHERE Rating != 0
+GROUP BY Year
+ORDER BY Year;
+
+-- 3. Visualization of the distribution of movie releases per year
+SELECT Year, COUNT(Movie_ID) AS num_movie_releases
+FROM fact_movie
+WHERE Rating != 0
+GROUP BY Year
+ORDER BY Year;
+
+-- 4. Which genres have seen the most significant ratings in popularity over the past decade?
+SELECT dg.Name, m.Year, ROUND(AVG(m.Rating), 2)
+FROM
+    fact_movie m
+    JOIN bridge_genre_movie bg ON m.Movie_ID = bg.Movie_ID
+    JOIN imdb_src.dim_genres dg on bg.Genre_SK = dg.Genre_SK
+WHERE
+    m.Year >= YEAR(CURRENT_DATE) - 10
+    AND Rating <> 0
+GROUP BY
+    dg.Name, m.Year
+ORDER BY 3 DESC, 2 DESC;
+
+-- 5. Show the top 5 genres as compared to gross earnings for the 9 box office movies.
+SELECT
+    dg.Name AS Genre,
+    SUM(fm.Worldwide_Gross) AS Total_Gross
+FROM
+    (
+    SELECT *
+    FROM fact_movie
+    WHERE Worldwide_Gross <> 0
+    ) fm
+    JOIN imdb_src.bridge_genre_movie bgm on fm.Movie_ID = bgm.Movie_ID
+    JOIN imdb_src.dim_genres dg on bgm.Genre_SK = dg.Genre_SK
+GROUP BY
+    dg.Name
+ORDER BY
+    2 DESC
+LIMIT 5;
+
+
+
+-- 6. Correlation between the movie's runtime and its average rating
+SELECT runtime, ROUND(AVG(Rating), 2) AS average_rating
+FROM (
+    SELECT floor(Run_Time / 5) * 5 AS runtime, Rating
+    FROM fact_movie
+) x
+WHERE Rating != 0
+GROUP BY runtime
+ORDER BY runtime;
+
+-- 7. Correlation between the movie's runtime and its average gross
+SELECT runtime, ROUND(AVG(Worldwide_Gross), 2) AS average_gross
+FROM (
+    SELECT floor(Run_Time / 5) * 5 AS runtime, Worldwide_Gross
+    FROM fact_movie
+) x
+WHERE Worldwide_Gross != 0
+GROUP BY runtime
+ORDER BY runtime;
+
+
+-- 8. Relationship between the number of votes and the average rating of movies.
+SELECT runtime, ROUND(AVG(Rating), 2) AS average_rating
+FROM (
+    SELECT floor(Num_Votes / 5) * 5 AS runtime, Rating
+    FROM fact_movie
+    WHERE Num_Votes <> 0
+) x
+WHERE Rating != 0
+GROUP BY runtime
+ORDER BY runtime;
+
+
+-- 9. Identify directors with the most films rated above 7. Sort them in the descending order
+SELECT
+    dc.Name,
+    COUNT(fm.Title_SK) AS num_movies
+FROM
+    fact_movie fm
+    JOIN (
+        SELECT *
+        FROM imdb_src.bridge_crew_movie
+        WHERE Profession_SK = (
+            SELECT Profession_SK FROM dim_profession WHERE Name = 'director'
+            )
+        ) bcm on fm.Movie_ID = bcm.Movie_ID
+    JOIN imdb_src.dim_crew dc on bcm.Crew_SK = dc.Crew_SK
+WHERE
+    Rating > 7
+GROUP BY
+    dc.Name
+ORDER BY
+    2 DESC;
+
+-- 10. Determine the directors who have directed the highest number of films overall and their respective gross earnings trends.
+SELECT dc.Name, x.num_movies, x.overall_gross
+FROM (
+    SELECT
+        dc.Crew_SK,
+        COUNT(fm.Title_SK) AS num_movies,
+        SUM(Worldwide_Gross) AS overall_gross
+    FROM
+        fact_movie fm
+        JOIN (
+            SELECT *
+            FROM imdb_src.bridge_crew_movie
+            WHERE Profession_SK = (
+                SELECT Profession_SK FROM dim_profession WHERE Name = 'director'
+                )
+            ) bcm on fm.Movie_ID = bcm.Movie_ID
+        JOIN imdb_src.dim_crew dc on bcm.Crew_SK = dc.Crew_SK
+    GROUP BY
+        dc.Crew_SK
+    ORDER BY
+        2 DESC, 3 DESC
+    LIMIT 50
+) x
+    JOIN dim_crew dc ON x.Crew_SK = dc.Crew_SK;
+
+
+-- 11. List the top 10 actors/actresses with the most films rated between 4 and 7
+SELECT DC.NAME AS CrewName, DP.NAME AS ProfessionName
+FROM dim_crew DC
+JOIN bridge_crew_movie BCM ON BCM.Crew_SK = DC.Crew_SK
+JOIN dim_profession DP ON BCM.Profession_SK = DP.Profession_SK
+JOIN fact_movie FM ON FM.Movie_ID = BCM.Movie_ID
+WHERE DP.NAME IN ('Actor', 'Actress') AND FM.Rating BETWEEN 4 AND 7 ORDER BY FM.Rating;
+
+-- 12. Compare the top 5 actors and actresses based on movie ratings
+WITH RANKED_ACTORS AS (
+    SELECT DC.NAME AS CrewName, DP.NAME AS ProfessionName,
+    RANK() OVER (PARTITION BY DP.NAME ORDER BY FM.Rating DESC) AS ActorRank
+    FROM dim_crew DC
+    JOIN bridge_crew_movie BCM ON BCM.Crew_SK = DC.Crew_SK
+    JOIN dim_profession DP ON BCM.Profession_SK = DP.Profession_SK
+    JOIN fact_movie FM ON FM.Movie_ID = BCM.Movie_ID
+    WHERE DP.NAME IN ('Actor', 'Actress')
+)
+SELECT CrewName, ProfessionName, ActorRank
+FROM RANKED_ACTORS
+WHERE ActorRank <= 5;
+
+-- 13. How does movie performance vary across different seasons of the year? (based on gross earnings)
+SELECT AVG(FE.DAILY_GROSS) AS AVG_SEASON_GROSS, DD.SEASON AS SEASON
+FROM FACT_EARNINGS FE
+JOIN DIM_DATE DD ON FE.DATE_SK = DD.DATE_SK
+GROUP BY DD.SEASON
+ORDER BY AVG_SEASON_GROSS;
+
+-- 14.  Top 3 movies based on the season (spring, summer, fall)
+SELECT season, Title FROM (
+	SELECT x.season, t.Title, x.season_total, RANK() OVER(PARTITION BY x.season ORDER BY x.season_total DESC) AS r
+	FROM dim_title t
+	JOIN (
+		SELECT f.Movie_ID AS tconst, d.season AS season, SUM(Daily_GROSS) AS season_total
+		FROM dim_date d
+		JOIN fact_earnings f ON d.Date_SK = f.Date_SK
+		GROUP BY f.Movie_ID, d.season
+	) x ON t.tconst = x.tconst
+) y WHERE r <= 3;
+
+-- 15. Identify movies that have had the widest release across multiple regions.
+select dt.title, count(brm.region_sk) as regions_count
+from dim_title dt join fact_movie fm on dt.tconst= fm.movie_id
+join bridge_region_movie brm on brm.movie_id = fm.movie_id
+group by brm.region_sk order by regions_count;

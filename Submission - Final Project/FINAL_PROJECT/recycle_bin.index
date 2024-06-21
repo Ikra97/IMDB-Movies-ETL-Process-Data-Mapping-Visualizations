@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<recyclebin:RecycleBin xmlns:recyclebin="http://www.talend.org/recyclebin">
+  <deletedFolders>context/Connections</deletedFolders>
+  <deletedFolders>process/StagingJobs</deletedFolders>
+  <deletedItems id="_bbCXUJIsEe6x56qGn8mRSw" path="Connections" type="CONTEXT"/>
+  <deletedItems id="_flBd8I_bEe6j8p5IYOvuKQ" path="StagingJobs" type="PROCESS"/>
+  <deletedItems id="_6jWHkJI2Ee6x56qGn8mRSw" path="logging" type="PROCESS"/>
+  <deletedItems id="_pHaPcJImEe6x56qGn8mRSw" path="orchestration" type="PROCESS"/>
+</recyclebin:RecycleBin>
